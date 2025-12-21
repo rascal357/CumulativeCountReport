@@ -1,0 +1,211 @@
+@page
+@model CumulativeCountReport.Pages.Report.IndexModel
+@{
+    ViewData["Title"] = "積算枚数レポート";
+}
+
+<h1>積算枚数レポート</h1>
+
+<div class="filter-section mb-4">
+    <form method="get">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="areaFilter" class="form-label">工程フィルター:</label>
+                <select id="areaFilter" name="SelectedArea" class="form-select">
+                    <option value="">すべて</option>
+                    @foreach (var area in Model.ViewModel.Areas)
+                    {
+                        <option value="@area" selected="@(area == Model.SelectedArea)">@area</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="startDate" class="form-label">開始日:</label>
+                <input type="date" id="startDate" name="StartDate" class="form-control"
+                       value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.AddDays(-6).ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-3">
+                <label for="endDate" class="form-label">終了日:</label>
+                <input type="date" id="endDate" name="EndDate" class="form-control"
+                       value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">検索</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>EOPID</th>
+                <th>TESTOPNO</th>
+                <th>ITEMPROMPT</th>
+                <th>Control Value</th>
+                @for (int i = 0; i < Model.ViewModel.DateRange.Count; i++)
+                {
+                    <th>@Model.ViewModel.DateRange[i].ToString("yyyy-MM-dd")</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var report in Model.ViewModel.Reports)
+            {
+                <tr>
+                    <td>@report.EopId</td>
+                    <td>@report.TestOpNo</td>
+                    <td>@report.ItemPrompt</td>
+                    <td>@report.ControlValue.ToString("N1")</td>
+                    @for (int i = 0; i < Model.ViewModel.DateRange.Count; i++)
+                    {
+                        var date = Model.ViewModel.DateRange[i];
+                        if (report.DailyValues.TryGetValue(date, out var value))
+                        {
+                            var cssClass = report.IsOverThreshold(value) ? "text-danger fw-bold" : "";
+                            <td class="@cssClass">@value.ToString("N1")</td>
+                        }
+                        else
+                        {
+                            <td></td>
+                        }
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.ViewModel.Reports.Any())
+{
+    <div class="alert alert-info" role="alert">
+        データがありません。
+    </div>
+}
+
+<style>
+    .table-responsive {
+        overflow-x: auto;
+        max-width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table {
+        font-size: 0.9rem;
+        white-space: nowrap;
+        min-width: 100%;
+        margin-bottom: 0;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+        min-width: 80px;
+    }
+
+    /* EOPID列 */
+    .table th:nth-child(1),
+    .table td:nth-child(1) {
+        min-width: 100px;
+        position: sticky;
+        left: 0;
+        background: #ffffff;
+        z-index: 3;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        background-clip: padding-box;
+    }
+
+    .table tbody td:nth-child(1) {
+        background: #ffffff;
+    }
+
+    /* TESTOPNO列 */
+    .table th:nth-child(2),
+    .table td:nth-child(2) {
+        min-width: 100px;
+        position: sticky;
+        left: 100px;
+        background: #ffffff;
+        z-index: 3;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        background-clip: padding-box;
+    }
+
+    .table tbody td:nth-child(2) {
+        background: #ffffff;
+    }
+
+    /* ITEMPROMPT列 */
+    .table th:nth-child(3),
+    .table td:nth-child(3) {
+        min-width: 200px;
+        position: sticky;
+        left: 200px;
+        background: #ffffff;
+        z-index: 3;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        background-clip: padding-box;
+    }
+
+    .table tbody td:nth-child(3) {
+        background: #ffffff;
+    }
+
+    /* Control Value列 */
+    .table th:nth-child(4),
+    .table td:nth-child(4) {
+        min-width: 120px;
+        position: sticky;
+        left: 400px;
+        background: #ffffff;
+        z-index: 3;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        background-clip: padding-box;
+    }
+
+    .table tbody td:nth-child(4) {
+        background: #ffffff;
+    }
+
+    /* ヘッダー行の固定列 */
+    .table thead th:nth-child(1),
+    .table thead th:nth-child(2),
+    .table thead th:nth-child(3),
+    .table thead th:nth-child(4) {
+        background: #212529;
+        z-index: 4;
+    }
+
+    /* ストライプ行の背景色 - 奇数行 */
+    .table-striped tbody tr:nth-of-type(odd) td:nth-child(1),
+    .table-striped tbody tr:nth-of-type(odd) td:nth-child(2),
+    .table-striped tbody tr:nth-of-type(odd) td:nth-child(3),
+    .table-striped tbody tr:nth-of-type(odd) td:nth-child(4) {
+        background: #f2f2f2;
+    }
+
+    /* 偶数行の背景色 */
+    .table-striped tbody tr:nth-of-type(even) td:nth-child(1),
+    .table-striped tbody tr:nth-of-type(even) td:nth-child(2),
+    .table-striped tbody tr:nth-of-type(even) td:nth-child(3),
+    .table-striped tbody tr:nth-of-type(even) td:nth-child(4) {
+        background: #ffffff;
+    }
+
+    .filter-section {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.25rem;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .fw-bold {
+        font-weight: bold !important;
+    }
+</style>
