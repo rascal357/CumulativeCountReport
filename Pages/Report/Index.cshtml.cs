@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using CumulativeCountReport.Data;
 using CumulativeCountReport.Models;
+using CumulativeCountReport.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,17 +64,11 @@ namespace CumulativeCountReport.Pages.Report
                 equipmentQuery = equipmentQuery.Where(e => e.Area == SelectedArea);
             }
 
-            var waferCountData = await _context.WaferCountHistories
-                .Where(w => dateRange.Contains(w.Date.Date))
-                .GroupBy(w => new { w.EopId, w.TestOpNo, w.ItemPrompt, Date = w.Date.Date })
-                .Select(g => new
-                {
-                    g.Key.EopId,
-                    g.Key.TestOpNo,
-                    g.Key.ItemPrompt,
-                    g.Key.Date,
-                    Value = g.OrderByDescending(x => x.Date).First().Value
-                })
+            // Areaに応じたSQLクエリでwaferCountDataを取得
+            var sql = WaferCountSqlUtility.GetWaferCountSqlByArea(SelectedArea);
+
+            var waferCountData = await _context.WaferCountQueryResults
+                .FromSqlRaw(sql, startDate, endDate)
                 .ToListAsync();
 
             var controlValues = await _context.DoopControlValues

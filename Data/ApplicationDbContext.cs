@@ -13,6 +13,7 @@ namespace CumulativeCountReport.Data
         public DbSet<WaferCountHistory> WaferCountHistories { get; set; } = null!;
         public DbSet<Equipment> Equipments { get; set; } = null!;
         public DbSet<DoopControlValue> DoopControlValues { get; set; } = null!;
+        public DbSet<WaferCountQueryResult> WaferCountQueryResults { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,6 +32,11 @@ namespace CumulativeCountReport.Data
             modelBuilder.Entity<DoopControlValue>(entity =>
             {
                 entity.HasIndex(e => new { e.EopId, e.TestOpNo, e.ItemPrompt });
+            });
+
+            modelBuilder.Entity<WaferCountQueryResult>(entity =>
+            {
+                entity.HasNoKey();
             });
         }
     }
